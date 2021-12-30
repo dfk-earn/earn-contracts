@@ -1,0 +1,19 @@
+{
+    "harmony": {
+        "DFKQuest": "0x5100bd31b822371108a0f63dcfb6594b9919eaf4",
+        "DFKVender": "0xe53BF78F8b99B6d356F93F41aFB9951168cca2c6",
+        "DFKGold": "0x3a4EDcf3312f44EF027acfd8c21382a5259936e7",
+        "questTypes": {
+            "fishing": "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc",
+            "foraging": "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4",
+            "mining": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73"
+        }
+    },
+    "hardhat": {
+        "questTypes": {
+            "fishing": "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc",
+            "foraging": "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4",
+            "mining": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73"
+        }
+    }
+}

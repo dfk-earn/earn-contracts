@@ -1,0 +1,9 @@
+[
+    "function withdrawETH(uint256 amount)",
+    "function withdrawTokens(address[] _tokens)",
+    "function withdrawNFTs(address _nft, uint256[] _tokenIds)",
+    "function swapForGold(address[] calldata _tokens, uint[] calldata _amounts)",
+    "function startQuest(uint256[] _heroIds, address _questType, uint8 _attempts)",
+    "function cancelQuest(uint256 _heroId)",
+    "function completeQuest(uint256 _heroId)"
+]
