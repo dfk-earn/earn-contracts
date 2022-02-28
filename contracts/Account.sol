@@ -1,98 +1,131 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./Custodian.sol";
-import "./interfaces/IDFKQuest.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "./interfaces/IAccount.sol";
 
-contract Account is ERC721Holder {
-    Custodian public custodian;
-    address public player;
+contract Account is IAccount, ERC721Holder, ERC1155Holder {
+    address public override factory;
+    address public override owner;
+
+    using EnumerableSet for EnumerableSet.AddressSet;
+    EnumerableSet.AddressSet private whitelist;
 
     constructor() {
-        custodian = Custodian(msg.sender);
+        factory = msg.sender;
     }
 
-    function initialize(address _player) external {
-        require(msg.sender == address(custodian), "Account: no permission");
-        player = _player;
-    }
-
-    receive() external payable {}
-
-    modifier onlyPlayer() {
-        require(msg.sender == player, "Account: caller must be player");
-        _;
-    }
-
-    modifier onlyOperator() {
-        require(msg.sender == custodian.operator(), "Account: caller must be operator");
-        _;
-    }
-
-    function withdrawETH(uint256 amount) external onlyPlayer {
-        uint256 balance = address(this).balance;
-        require(amount <= balance, "Account: insufficient balance");
-        payable(player).transfer(amount);
-    }
-
-    function withdrawTokens(address[] calldata _tokens) external onlyPlayer {
-        for (uint i = 0; i < _tokens.length; i++) {
-            IERC20 token = IERC20(_tokens[i]);
-            uint256 balance = token.balanceOf(address(this));
-            token.transfer(msg.sender, balance);
+    function initialize(address _owner, address[] calldata _whitelist) external payable {
+        require(msg.sender == factory, "Account: no permission");
+        owner = _owner;
+        _updateWhitelist(_whitelist, new address[](0));
+        if (address(this).balance > 0) {
+            emit Received(address(0), address(this).balance);
         }
     }
 
-    function withdrawNFTs(address _nft, uint256[] calldata _tokenIds) external onlyPlayer {
-        IERC721 nft = IERC721(_nft);
-        for (uint i = 0; i < _tokenIds.length; i++) {
-            nft.safeTransferFrom(address(this), msg.sender, _tokenIds[i]);
-        }
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
     }
 
-    function swapForGold(address[] calldata _tokens, uint[] calldata _amounts) external onlyPlayer {
-        address vender = custodian.DFKVender();
-        for (uint i = 0; i < _tokens.length; i++) {
-            IERC20 token = IERC20(_tokens[i]);
-            uint amount = _amounts[i];
-            uint balance = token.balanceOf(address(this));
-            require(amount <= balance, "Account: insufficient balance");
-            token.approve(vender, amount);
-            bytes memory payload = abi.encodeWithSelector(bytes4(0x096c5e1a), _tokens[i], _amounts[i]);
-            (bool success,) = vender.call(payload);
-            require(success, "Account: sell items failed");
-        }
-        IERC20 DFKGold = IERC20(custodian.DFKGold());
-        uint goldBalance = DFKGold.balanceOf(address(this));
-        DFKGold.transfer(player, goldBalance);
-    }
-
-    function startQuest(
-        uint256[] calldata _heroIds,
-        address _questType,
-        uint8 _attempts
-    ) 
+    function sendValue(
+        address payable _recipient,
+        uint256 _amount
+    )
         external
-        onlyOperator
+        payable
+        override
+        onlyWhitelisted
     {
-        uint256 fee = _heroIds.length * custodian.fee();
-        require(address(this).balance >= fee, "Account: insufficent balance");
-        require(custodian.questTypes(_questType), "Account: unsupported questType");
-        IDFKQuest DFKQuest = IDFKQuest(custodian.DFKQuest());
-        DFKQuest.startQuest(_heroIds, _questType, _attempts);
-        payable(custodian.admin()).transfer(fee);
+        Address.sendValue(_recipient, _amount);
     }
 
-    function cancelQuest(uint256 _heroId) external onlyOperator {
-        IDFKQuest DFKQuest = IDFKQuest(custodian.DFKQuest());
-        DFKQuest.cancelQuest(_heroId);
+    function functionCall(
+        address _target,
+        bytes memory _data
+    )
+        external
+        payable
+        override
+        onlyWhitelisted
+        returns (bytes memory)
+    {
+        return Address.functionCall(_target, _data);
     }
 
-    function completeQuest(uint256 _heroId) external onlyOperator {
-        IDFKQuest DFKQuest = IDFKQuest(custodian.DFKQuest());
-        DFKQuest.completeQuest(_heroId);
+    function functionCallWithValue(
+        address _target,
+        bytes memory _data,
+        uint _value
+    )
+        external
+        payable
+        override
+        onlyWhitelisted
+        returns (bytes memory)
+    {
+        return Address.functionCallWithValue(_target, _data, _value);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Account: not owner");
+        _;
+    }
+
+    modifier onlyWhitelisted() {
+        require(isWhitelisted(msg.sender), "Account: not whitelisted");
+        _;
+    }
+
+    function isWhitelisted(address _address) public view override returns(bool) {
+        return _address == owner || whitelist.contains(_address);
+    }
+
+    function getWhitelist() public view override returns (address[] memory) {
+        uint length = whitelist.length();
+        address[] memory result = new address[](length);
+        for (uint i = 0; i < length; i++) {
+            result[i] = whitelist.at(i);
+        }
+        return result;
+    }
+
+    function updateWhitelist(
+        address[] memory _toAdd,
+        address[] memory _toRemove
+    )
+        public
+        override
+        onlyOwner
+    {
+        _updateWhitelist(_toAdd, _toRemove);
+    }
+
+    function addToWhitelist(address[] memory _toAdd) public override onlyOwner {
+        _updateWhitelist(_toAdd, new address[](0));
+    }
+
+    function removeFromWhitelist(address[] memory _toRemove) public override onlyOwner {
+        _updateWhitelist(new address[](0), _toRemove);
+    }
+
+    function _updateWhitelist(
+        address[] memory _toAdd,
+        address[] memory _toRemove
+    )
+        internal
+    {
+        for (uint i = 0; i < _toAdd.length; i++) {
+            whitelist.add(_toAdd[i]);
+            emit WhitelistAdded(_toAdd[i]);
+        }
+
+        for (uint i = 0; i < _toRemove.length; i++) {
+            whitelist.remove(_toRemove[i]);
+            emit WhitelistRemoved(_toRemove[i]);
+        }
     }
 }

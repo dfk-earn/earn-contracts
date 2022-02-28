@@ -15,7 +15,12 @@ module.exports = async function({
         log: true,
     })
 
-    await deploy("MockReward", {
+    await deploy("MockItem", {
+        from: deployer,
+        log: true,
+    })
+
+    await deploy("MockJewel", {
         from: deployer,
         log: true,
     })
@@ -25,3 +30,5 @@ module.exports = async function({
         log: true,
     })
 }
+
+module.exports.tags = [ "mocks" ];

@@ -1,9 +1,15 @@
 [
-    "function withdrawETH(uint256 amount)",
-    "function withdrawTokens(address[] _tokens)",
-    "function withdrawNFTs(address _nft, uint256[] _tokenIds)",
-    "function swapForGold(address[] calldata _tokens, uint[] calldata _amounts)",
-    "function startQuest(uint256[] _heroIds, address _questType, uint8 _attempts)",
-    "function cancelQuest(uint256 _heroId)",
-    "function completeQuest(uint256 _heroId)"
+  "event Received(address indexed sender, uint256 value)",
+  "event WhitelistAdded(address indexed _address)",
+  "event WhitelistRemoved(address indexed _address)",
+  "function factory() view returns (address)",
+  "function owner() view returns (address)",
+  "function sendValue(address _recipient, uint256 _amount) payable",
+  "function functionCall(address _target, bytes _data) payable returns (bytes result)",
+  "function functionCallWithValue(address _target, bytes _data, uint256 _value) payable returns (bytes result)",
+  "function getWhitelist() view returns (address[])",
+  "function isWhitelisted(address _address) view returns (bool)",
+  "function addToWhitelist(address[] _toAdd)",
+  "function removeFromWhitelist(address[] _toRemove)",
+  "function updateWhitelist(address[] _toAdd, address[] _toRemove)"
 ]

@@ -1,0 +1,9 @@
+[
+  "event AccountCreated(address indexed creator, address indexed account, uint256 index)",
+  "function accounts(address) view returns (address)",
+  "function creators(uint256) view returns (address)",
+  "function total() view returns (uint256)",
+  "function createAccount() payable returns (address account)",
+  "function createAccountWithWhitelist(address[] whitelist) payable returns (address account)",
+  "function hasAccount(address creator) view returns (bool)"
+]

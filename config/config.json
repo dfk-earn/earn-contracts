@@ -1,19 +1,22 @@
 {
     "harmony": {
-        "DFKQuest": "0x5100bd31b822371108a0f63dcfb6594b9919eaf4",
-        "DFKVender": "0xe53BF78F8b99B6d356F93F41aFB9951168cca2c6",
-        "DFKGold": "0x3a4EDcf3312f44EF027acfd8c21382a5259936e7",
+        "DFKQuest": "0x5100Bd31b822371108A0f63DCFb6594b9919Eaf4",
+        "JEWEL": "0x72Cb10C6bfA5624dD07Ef608027E366bd690048F",
         "questTypes": {
             "fishing": "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc",
             "foraging": "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4",
-            "mining": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73"
+            "miningGold": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73",
+            "miningJewel": "0x6FF019415Ee105aCF2Ac52483A33F5B43eaDB8d0",
+            "gardening": "e4154b6e5d240507f9699c730a496790a722df19"
         }
     },
     "hardhat": {
         "questTypes": {
             "fishing": "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc",
             "foraging": "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4",
-            "mining": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73"
+            "miningGold": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73",
+            "miningJewel": "0x6FF019415Ee105aCF2Ac52483A33F5B43eaDB8d0",
+            "gardening": "e4154b6e5d240507f9699c730a496790a722df19"
         }
     }
 }

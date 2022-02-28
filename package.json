@@ -1,18 +1,21 @@
 {
   "name": "dfkearn",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Contracts for DFKEarn",
   "scripts": {
     "build": "hardhat compile",
     "node": "hardhat node --network hardhat",
-    "deploy:localhost": "hardhat --network localhost deploy",
-    "deploy:harmony": "hardhat --network harmony deploy"
+    "deploy:harmony": "hardhat --network harmony deploy",
+    "test": "hardhat test"
   },
   "license": "MIT",
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.11",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.4.0",
+    "chai": "^4.3.4",
     "dotenv": "^10.0.0",
+    "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.1",
     "hardhat": "^2.7.0",
     "hardhat-deploy": "^0.9.14"
