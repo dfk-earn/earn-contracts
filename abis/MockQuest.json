@@ -1,0 +1,5 @@
+[
+  "function cancelQuest(uint256 _heroId) view",
+  "function completeQuest(uint256 _heroId) view",
+  "function startQuest(uint256[] _heroIds, address _questAddress, uint8 _attempts, uint8 _level) view"
+]

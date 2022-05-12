@@ -1,22 +1,30 @@
 {
     "harmony": {
-        "DFKQuest": "0x5100Bd31b822371108A0f63DCFb6594b9919Eaf4",
-        "JEWEL": "0x72Cb10C6bfA5624dD07Ef608027E366bd690048F",
-        "questTypes": {
-            "fishing": "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc",
-            "foraging": "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4",
-            "miningGold": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73",
-            "miningJewel": "0x6FF019415Ee105aCF2Ac52483A33F5B43eaDB8d0",
-            "gardening": "e4154b6e5d240507f9699c730a496790a722df19"
+        "DFKJewelToken": "0x72Cb10C6bfA5624dD07Ef608027E366bd690048F",
+        "AccountFactory": "0x26B1029bD0bEEb31F2F5da74d2dd19fAC92b85Cc",
+        "questWeights": {
+            "fishing": [ "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc", 1 ],
+            "foraging": [ "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4", 1 ],
+            "miningGold": [ "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73", 3 ],
+            "miningJewel": [ "0x6FF019415Ee105aCF2Ac52483A33F5B43eaDB8d0", 3 ],
+            "gardening": [ "e4154b6e5d240507f9699c730a496790a722df19", 3 ],
+            "intelligence": [ "0x6176EedE1AE9127D59266f197Ad598653E4F8c92", 1 ],
+            "agility": [ "0xFA20B218927B0f57a08196743488c7C790a5625B", 1 ],
+            "strength": [ "0xf60AF3a32Bb94e395E17C70aB695d968F37Bd2e4", 1 ],
+            "dexterity": [ "0xe03fd4e2F6421b1251297240cE5248508C9104eD", 1 ],
+            "endurance": [ "0xCb594A24D802cdF65000A84dC0059dde11c9d15f", 1 ],
+            "vitality": [ "0x2174bBeFbEFBD766326a7C7538f93a78Db3eD449", 1 ],
+            "wisdom": [ "0x347097454fA1931A4e80dcDebb31F29FC355CbCE", 1 ],
+            "luck": [ "0x13E74E4E64805E7fdA381C9BEF1e77cd16086E56", 1 ]
         }
     },
     "hardhat": {
-        "questTypes": {
-            "fishing": "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc",
-            "foraging": "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4",
-            "miningGold": "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73",
-            "miningJewel": "0x6FF019415Ee105aCF2Ac52483A33F5B43eaDB8d0",
-            "gardening": "e4154b6e5d240507f9699c730a496790a722df19"
+        "questWeights": {
+            "fishing": [ "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc", 1 ],
+            "foraging": [ "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4", 1 ],
+            "miningGold": [ "0x569E6a4c2e3aF31B337Be00657B4C040C828Dd73", 3 ],
+            "miningJewel": [ "0x6FF019415Ee105aCF2Ac52483A33F5B43eaDB8d0", 3 ],
+            "gardening": [ "e4154b6e5d240507f9699c730a496790a722df19", 3 ]
         }
     }
 }

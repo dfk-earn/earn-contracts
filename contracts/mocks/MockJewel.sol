@@ -10,7 +10,7 @@ contract MockJewel is ERC20 {
         return 18;
     }
 
-    function mint(uint256 amount) public {
-        _mint(msg.sender, amount);
+    function mint(address _account, uint256 _amount) public {
+        _mint(_account, _amount);
     }
 }

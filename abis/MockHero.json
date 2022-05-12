@@ -1,6 +1,6 @@
 [
   "function approve(address to, uint256 tokenId)",
-  "function mint(address to, uint256 tokenId)",
+  "function mint(address _account, uint256 _amount)",
   "function safeTransferFrom(address from, address to, uint256 tokenId)",
   "function safeTransferFrom(address from, address to, uint256 tokenId, bytes _data)",
   "function setApprovalForAll(address to, bool approved)",
@@ -13,5 +13,6 @@
   "function getApproved(uint256 tokenId) view returns (address)",
   "function isApprovedForAll(address owner, address operator) view returns (bool)",
   "function ownerOf(uint256 tokenId) view returns (address)",
-  "function supportsInterface(bytes4 interfaceId) view returns (bool)"
+  "function supportsInterface(bytes4 interfaceId) view returns (bool)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)"
 ]

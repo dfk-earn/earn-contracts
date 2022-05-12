@@ -7,17 +7,14 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract MockHero is ERC721Enumerable {
     using Counters for Counters.Counter;
-    Counters.Counter private heroIds;
+    Counters.Counter private counter;
 
     constructor() ERC721("MockHero", "MHR") {}
 
-    function mint()
-        public
-        returns (uint256)
-    {
-        uint256 newHeroId = heroIds.current();
-        _mint(msg.sender, newHeroId);
-        heroIds.increment();
-        return newHeroId;
+    function mint(address _account, uint256 _amount) public {
+        for (uint256 i = 0; i < _amount; i++) {
+            counter.increment();
+            _mint(_account, counter.current());
+        }
     }
 }

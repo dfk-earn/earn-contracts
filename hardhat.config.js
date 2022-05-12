@@ -17,5 +17,14 @@ module.exports = {
     namedAccounts: {
         deployer: 0,
     },
-    solidity: "0.8.4",
+    solidity: {
+        version: "0.8.7",
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            },
+            evmVersion: "london"
+        }
+    }
 };
