@@ -48,6 +48,6 @@
   "function upgradeScheduler() view returns (address)",
   "function upgradeTo(address newImplementation)",
   "function upgradeToAndCall(address newImplementation, bytes data) payable",
-  "function withdrawalHeros(uint256[] tokenIds)",
+  "function withdrawalHeroes(uint256[] tokenIds)",
   "constructor(address _logic, bytes _data) payable"
 ]

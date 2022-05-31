@@ -73,7 +73,7 @@ contract HeroPool is Upgradable, PausableUpgradeable, IERC721Receiver, ERC1155Ho
         return this.onERC721Received.selector;
     }
 
-    function withdrawalHeros(uint256[] calldata tokenIds) external {
+    function withdrawalHeroes(uint256[] calldata tokenIds) external {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             address heroOwner = heroOwners[tokenId];

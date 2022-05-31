@@ -1,7 +1,13 @@
 {
     "harmony": {
+        "DFKHero": "0x5F753dcDf9b1AD9AabC1346614D1f4746fd6Ce5C",
         "DFKJewelToken": "0x72Cb10C6bfA5624dD07Ef608027E366bd690048F",
         "AccountFactory": "0x26B1029bD0bEEb31F2F5da74d2dd19fAC92b85Cc",
+        "AuctionHouse": "0xaE617f0519fc69112C1a6972eEb9B7D8144563c4",
+        "HeroBank": {
+            "maxHeroCount": 1000,
+            "minCollateralInEther": 10000
+        },
         "questWeights": {
             "fishing": [ "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc", 1 ],
             "foraging": [ "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4", 1 ],
@@ -19,6 +25,10 @@
         }
     },
     "hardhat": {
+        "HeroBank": {
+            "maxHeroCount": 1000,
+            "minCollateralInEther": 100
+        },
         "questWeights": {
             "fishing": [ "0xE259e8386d38467f0E7fFEdB69c3c9C935dfaeFc", 1 ],
             "foraging": [ "0x3132c76acF2217646fB8391918D28a16bD8A8Ef4", 1 ],

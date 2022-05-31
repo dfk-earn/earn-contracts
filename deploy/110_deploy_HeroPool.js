@@ -1,10 +1,15 @@
+const config = require("../config/config.json");
+
 module.exports = async function({
     getNamedAccounts,
     deployments,
     network
 }) {
     const { deployer } = await getNamedAccounts();
-    const AuctionHouse = (await deployments.get("AuctionHouse")).address;
+    const auctionHouseAddress = config[network.name]["AuctionHouse"];
+    if (!auctionHouseAddress) {
+        auctionHouseAddress = (await deployments.get("AuctionHouse")).address;
+    }
 
     await deployments.deploy("HeroPool", {
         from: deployer,
@@ -14,7 +19,7 @@ module.exports = async function({
             execute: {
                 init: {
                     methodName: "initialize",
-                    args: [ AuctionHouse ]
+                    args: [ auctionHouseAddress ]
                 }
             },
         },

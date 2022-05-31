@@ -1,6 +1,7 @@
 require("dotenv").config();
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-deploy");
+require("@nomiclabs/hardhat-etherscan");
 
 module.exports = {
     networks: {
@@ -25,6 +26,11 @@ module.exports = {
                 runs: 200,
             },
             evmVersion: "london"
+        }
+    },
+    etherscan: {
+        apiKey: {
+          harmony: "your_apiKey"
         }
     }
 };

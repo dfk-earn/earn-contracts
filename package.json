@@ -9,11 +9,13 @@
     "test": "hardhat test",
     "convertAbi:harmony": "node scripts/convertAbi.js harmony",
     "upgrade": "node scripts/upgrade.js",
-    "remixd": "remixd -s . --remix-ide https://remix.ethereum.org"
+    "remixd": "remixd -s . --remix-ide https://remix.ethereum.org",
+    "verify": "hardhat verify --network harmony"
   },
   "license": "MIT",
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.11",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.4.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
