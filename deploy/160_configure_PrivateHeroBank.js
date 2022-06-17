@@ -4,17 +4,17 @@ module.exports = async function({
     ethers
 }) {
     const { deployer } = await getNamedAccounts();
-    const deployment = await deployments.get("HeroBank");  
-    const HeroBank = await ethers.getContractAt(
+    const deployment = await deployments.get("PrivateHeroBank");  
+    const PrivateHeroBank = await ethers.getContractAt(
         deployment.abi,
         deployment.address,
         await ethers.getSigner(deployer)
     );
 
     const operator = process.env.DFKEarn_operator || deployer;
-    const tx = await HeroBank.updateOperator(operator, true);
+    const tx = await PrivateHeroBank.updateOperator(operator, true);
     await tx.wait();
-    console.log(`HeroBank: set operator: ${operator}`);
+    console.log(`PrivateHeroBank: set operator: ${operator}`);
 }
 
-module.exports.tags = [ "configureHeroBank" ];
+module.exports.tags = [ "configurePrivateHeroBank" ];

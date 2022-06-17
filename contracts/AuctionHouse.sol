@@ -12,6 +12,7 @@ contract AuctionHouse is Market {
         uint minPrice;
         uint currentPrice;
         uint expiration;
+        uint renewPeriod;
         uint deadline;
         uint commission;
         AuctionStatus status;
@@ -45,7 +46,8 @@ contract AuctionHouse is Market {
     function create(
         Item calldata _item,
         uint _minPrice,
-        uint _expiration
+        uint _expiration,
+        uint _renewPeriod
     )
         external
         whenNotPaused
@@ -68,6 +70,7 @@ contract AuctionHouse is Market {
             minPrice: minPrice,
             currentPrice: 0,
             expiration: _expiration,
+            renewPeriod: _renewPeriod,
             deadline: 0,
             commission: commission,
             status: AuctionStatus.Created
@@ -114,9 +117,14 @@ contract AuctionHouse is Market {
         }
 
         transferMoney(committer, address(this), price);
+        uint deadline = (auction.deadline == 0)
+            ? block.timestamp + auction.expiration
+            : block.timestamp + auction.renewPeriod;
+        if (deadline > auction.deadline) {
+            auctions[_id].deadline = deadline;
+        }
         auctions[_id].bidder = bidder;
         auctions[_id].currentPrice = price;
-        auctions[_id].deadline = block.timestamp + auction.expiration;
         auctions[_id].status = AuctionStatus.Bidding;
         emit NewBidder(_id, bidder);
     }

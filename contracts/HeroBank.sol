@@ -16,17 +16,26 @@ import "./AuctionHouse.sol";
 contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     address public immutable DFKHero;
-    uint public immutable MIN_COLLATERAL;
-    uint public constant BORROW_LIMIT = 6;
+    uint public immutable COLLATERAL_PER_OPERATOR;
+    uint public constant BORROW_LIMIT_PER_OPERATOR = 6;
 
     AuctionHouse public auctionHouse;
     uint public auctionExpiration;
+    uint public auctionRenewPeriod;
 
-    address public operator;
+    EnumerableSet.AddressSet private operators;
+    uint public numActiveOperators = 0;
 
-    uint public maxHeroCount;
+    struct BorrowInfo {
+        uint numBorrows;
+        uint[BORROW_LIMIT_PER_OPERATOR] borrowedHeroes;
+    }
+    // operator address to borrow info
+    mapping(address => BorrowInfo) public borrowInfos;
+
     // current hero count in bank
     uint numHeroes;
     // heroId to hero owner address
@@ -34,34 +43,31 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
     // owner address to heroId set
     mapping(address => EnumerableSet.UintSet) ownedHeroes;
 
-    uint numBorrows;
-    uint[BORROW_LIMIT] borrowedHeroes;
-
     // Mapping from user address to borrow count
-    mapping(address => uint) public userLoans;
-    uint public totalLoans;
+    mapping(address => uint) public userScores;
+    uint public totalScore;
 
     event CollateralReceived(address sender, uint256 value);
+    event OperatorUpdated(address operator, bool add);
     event HeroReceived(address indexed from, uint256 tokenId);
     event HeroSent(address indexed to, uint256 tokenId);
     event OperatorChanged(address newOperator, address oldOperator);
-    event Claim(address indexed user, uint256 userLoans, uint256 totalLoans);
+    event UserClaimed(address indexed user, uint256 value);
 
     constructor(
-        uint _maxHeroCount,
-        uint _minCollateral,
+        address _DFKHero,
         address _auctionHouse,
-        address _DFKHero
+        uint _collateralPerOperator
     ) {
-        maxHeroCount = _maxHeroCount;
-        MIN_COLLATERAL = _minCollateral;
-        auctionHouse = AuctionHouse(_auctionHouse);
-        auctionExpiration = 1 days;
         DFKHero = _DFKHero;
+        auctionHouse = AuctionHouse(_auctionHouse);
+        COLLATERAL_PER_OPERATOR = _collateralPerOperator;
+        auctionExpiration = 1 days;
+        auctionRenewPeriod = 2 hours;
     }
 
     modifier onlyOperator() {
-        require(operator == msg.sender, "HeroBank: not operator");
+        require(operators.contains(msg.sender), "HeroBank: not operator");
         _;
     }
 
@@ -82,7 +88,6 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
     {
         if (msg.sender == DFKHero) {
             assert(heroOwners[_tokenId] == address(0));
-            require(numHeroes <= maxHeroCount, "HeroBank: exceed maxHeroCount");
             onHeroReceived(_tokenId, _from);
         }
         return this.onERC721Received.selector;
@@ -100,51 +105,68 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
 
     function createAuctionAndBid(Item calldata _item, uint256 _initialPrice) external {
         transferMoney(msg.sender, address(this), _initialPrice);
-        uint auctionId = auctionHouse.create(_item, _initialPrice, auctionExpiration);
+        uint auctionId = auctionHouse.create(
+            _item,
+            _initialPrice,
+            auctionExpiration,
+            auctionRenewPeriod
+        );
         auctionHouse.money().approve(address(auctionHouse), _initialPrice);
         auctionHouse.bid(auctionId, _initialPrice, msg.sender);
     }
 
     function getClaimable(address user) public view returns (uint256) {
-        return getBalance() * userLoans[user] / totalLoans;
+        return getRealizedProfit() * userScores[user] / totalScore;
     }
 
     function claim() external {
-        uint claimable = getClaimable(msg.sender);
+        address user = msg.sender;
+        uint claimable = getClaimable(user);
         require(claimable > 0, "HeroBank: no claimable");
-        uint count = userLoans[msg.sender];
-        userLoans[msg.sender] = 0;
-        totalLoans -= count;
-        transferMoney(address(this), msg.sender, claimable);
-        emit Claim(msg.sender, count, totalLoans);
+        uint score = userScores[user];
+        userScores[user] = 0;
+        totalScore -= score;
+        transferMoney(address(this), user, claimable);
+        emit UserClaimed(user, claimable);
     }
 
     function borrowHeroes(uint[] memory _heroes) external onlyOperator {
-        require(numBorrows == 0, "HeroBank: unreturned heroes");
-        require(_heroes.length <= BORROW_LIMIT, "HeroBank: exceed BORROW_LIMIT");
-        require(address(this).balance >= MIN_COLLATERAL, "HeroBank: not enough margin");
+        address operator = msg.sender;
+        BorrowInfo storage borrowInfo = borrowInfos[operator];
+        require(borrowInfo.numBorrows == 0, "HeroBank: unreturned heroes");
+        require(
+            availableCollateral() >= COLLATERAL_PER_OPERATOR,
+            "HeroBank: insufficient collateral"
+        );
+        require(
+            _heroes.length <= BORROW_LIMIT_PER_OPERATOR,
+            "HeroBank: exceed BORROW_LIMIT"
+        );
         for (uint i = 0; i < _heroes.length; i++) {
-            borrowedHeroes[i] = _heroes[i];
+            borrowInfo.borrowedHeroes[i] = _heroes[i];
             IERC721(DFKHero).transferFrom(address(this), operator, _heroes[i]);
         }
-        numBorrows = _heroes.length;
+        borrowInfo.numBorrows = _heroes.length;
+        numActiveOperators++;
     }
 
     function repayHeroes() external onlyOperator {
-        require(numBorrows > 0, "HeroBank: no borrowed hero");
-        for (uint i = 0; i < numBorrows; i++) {
-            uint heroId = borrowedHeroes[i];
+        address operator = msg.sender;
+        BorrowInfo storage borrowInfo = borrowInfos[operator];
+        require(borrowInfo.numBorrows > 0, "HeroBank: no borrow info");
+        for (uint i = 0; i < borrowInfo.numBorrows; i++) {
+            uint heroId = borrowInfo.borrowedHeroes[i];
             IERC721(DFKHero).transferFrom(operator, address(this), heroId);
             address heroOwner = heroOwners[heroId];
-            userLoans[heroOwner] += 1;
-            totalLoans += 1;
+            userScores[heroOwner] += 1;
+            totalScore += 1;
         }
-        numBorrows = 0;
+        borrowInfo.numBorrows = 0;
+        numActiveOperators--;
     }
 
     function withdrawalCollateral() external onlyOwner {
-        require(numBorrows == 0, "HeroBank: unreturned heroes");
-        Address.sendValue(payable(owner()), address(this).balance);
+        Address.sendValue(payable(owner()), availableCollateral());
     }
 
     function setHeroOwner(uint _heroId, address _owner) external onlyOwner {
@@ -157,14 +179,22 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
         auctionExpiration = _expiration;
     }
 
-    function setMaxHeroCount(uint _maxHeroCount) external onlyOwner {
-        maxHeroCount = _maxHeroCount;
+    function setAuctionRenewPeriod(uint _renewPeriod) external onlyOwner {
+        auctionRenewPeriod = _renewPeriod;
     }
 
-    function setOperator(address _operator) external onlyOwner {
-        address oldOperator = operator;
-        operator = _operator;
-        emit OperatorChanged(operator, oldOperator);
+    function updateOperator(address _operator, bool _add) external onlyOwner {
+        if (_add) {
+            operators.add(_operator);
+        } else {
+            require(
+                borrowInfos[_operator].numBorrows == 0,
+                "HeroBank: unreturned heroes"
+            );
+            delete borrowInfos[_operator];
+            operators.remove(_operator);
+        }
+        emit OperatorUpdated(_operator, _add);
     }
 
     function pause() external onlyOwner {
@@ -193,10 +223,21 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
         }
     }
 
-    function getBorrowedHeroes() public view returns (uint[] memory) {
+    function getBorrowedHeroes(address _operator) public view returns (uint[] memory) {
+        BorrowInfo storage borrowInfo = borrowInfos[_operator];
+        uint numBorrows = borrowInfo.numBorrows;
         uint[] memory result = new uint[](numBorrows);
         for (uint i = 0; i < numBorrows; i++) {
-            result[i] = borrowedHeroes[i];
+            result[i] = borrowInfo.borrowedHeroes[i];
+        }
+        return result;
+    }
+
+    function getOperators() public view returns (address[] memory) {
+        uint length = operators.length();
+        address[] memory result = new address[](length);
+        for (uint i = 0; i < length; i++) {
+            result[i] = operators.at(i);
         }
         return result;
     }
@@ -211,7 +252,7 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
         return result;
     }
 
-    function getBalance() public view returns (uint) {
+    function getRealizedProfit() public view returns (uint) {
         return auctionHouse.money().balanceOf(address(this));
     }
 
@@ -235,5 +276,9 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
         } else {
             auctionHouse.money().safeTransferFrom(_from, _to, _amount);
         }
+    }
+
+    function availableCollateral() private view returns (uint) {
+        return address(this).balance - numActiveOperators * COLLATERAL_PER_OPERATOR;
     }
 }

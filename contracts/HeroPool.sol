@@ -23,6 +23,7 @@ contract HeroPool is Upgradable, PausableUpgradeable, IERC721Receiver, ERC1155Ho
 
     AuctionHouse public auctionHouse;
     uint public auctionExpiration;
+    uint public auctionRenewPeriod;
 
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private operators;
@@ -46,7 +47,8 @@ contract HeroPool is Upgradable, PausableUpgradeable, IERC721Receiver, ERC1155Ho
         __Ownable_init();
         __Pausable_init();
         auctionHouse = AuctionHouse(_auctionHouse);
-        auctionExpiration = 2 days;
+        auctionExpiration = 1 days;
+        auctionRenewPeriod = 2 hours;
     }
 
     modifier onlyOperator() {
@@ -86,7 +88,12 @@ contract HeroPool is Upgradable, PausableUpgradeable, IERC721Receiver, ERC1155Ho
 
     function createAuctionAndBid(Item calldata _item, uint256 _initialPrice) external {
         transferMoney(msg.sender, address(this), _initialPrice);
-        uint auctionId = auctionHouse.create(_item, _initialPrice, auctionExpiration);
+        uint auctionId = auctionHouse.create(
+            _item,
+            _initialPrice,
+            auctionExpiration,
+            auctionRenewPeriod
+        );
         auctionHouse.money().approve(address(auctionHouse), _initialPrice);
         auctionHouse.bid(auctionId, _initialPrice, msg.sender);
     }
@@ -145,6 +152,10 @@ contract HeroPool is Upgradable, PausableUpgradeable, IERC721Receiver, ERC1155Ho
 
     function setAuctionExpiration(uint _expiration) external onlyOwner {
         auctionExpiration = _expiration;
+    }
+
+    function setAuctionRenewPeriod(uint _renewPeriod) external onlyOwner {
+        auctionRenewPeriod = _renewPeriod;
     }
 
     function createProfile(

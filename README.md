@@ -25,6 +25,8 @@
 **HeroBank**
 0xE55923577ADB507B2410cFCA12336A15AcDE7c4E (support auto-quest via EOA account)
 
+**PrivateHeroBank** - Not Deployed
+
 **HeroPool** - Not Deployed
 
 **TimelockController** - Not Deployed

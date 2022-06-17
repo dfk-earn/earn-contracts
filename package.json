@@ -7,7 +7,7 @@
     "node": "hardhat node --network hardhat",
     "deploy:harmony": "hardhat --network harmony deploy",
     "test": "hardhat test",
-    "convertAbi:harmony": "node scripts/convertAbi.js harmony",
+    "genabi": "node scripts/genabi.js",
     "upgrade": "node scripts/upgrade.js",
     "remixd": "remixd -s . --remix-ide https://remix.ethereum.org",
     "verify": "hardhat verify --network harmony"

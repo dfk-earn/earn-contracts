@@ -7,26 +7,23 @@ module.exports = async function({
     ethers
 }) {
     const { deployer } = await getNamedAccounts();
-
-    const HeroBankConfig = config[network.name]["HeroBank"];
-    const { collateralPerOperatorInEther } = HeroBankConfig;
-    const auctionHouseAddress = network.live
-        ? HeroBankConfig["AuctionHouse"]
-        : (await deployments.get("AuctionHouse")).address;
-
+    const { collateralPerOperatorInEther } = config[network.name]["PrivateHeroBank"];
     const DFKHeroAddress = network.live
         ? config[network.name]["DFKHero"]
         : (await deployments.get("MockHero")).address;
+    const DFKJewelAddress = network.live
+        ? config[network.name]["DFKJewelToken"]
+        : (await deployments.get("MockJewel")).address;
 
-    await deployments.deploy("HeroBank", {
+    await deployments.deploy("PrivateHeroBank", {
         from: deployer,
         args: [
             DFKHeroAddress,
-            auctionHouseAddress,
+            DFKJewelAddress,
             ethers.utils.parseEther(collateralPerOperatorInEther.toString())
         ],
         log: true,
     });
 }
 
-module.exports.tags = [ "HeroBank" ];
+module.exports.tags = [ "PrivateHeroBank" ];

@@ -62,6 +62,7 @@ describe("AuctionHouseMarket", function() {
             ids: []
         }, minPrice);
 
+        // should be reverted if bid price less than minPrice
         let buyer1Price = JewelScale.mul(29);
         await expect(AuctionHouse.connect(buyer1).bid(
             auctionId,
@@ -69,6 +70,7 @@ describe("AuctionHouseMarket", function() {
             ethers.constants.AddressZero
         )).to.be.reverted;
 
+        // buyer1 should bid successfully
         buyer1Price = JewelScale.mul(31);
         tx = await AuctionHouse.connect(buyer1).bid(
             auctionId,
@@ -77,6 +79,7 @@ describe("AuctionHouseMarket", function() {
         );
         await tx.wait();
 
+        // buyer2 should be rejected because his price is not higher than buyer1
         let buyer2Price = JewelScale.mul(31);
         await expect(AuctionHouse.connect(buyer2).bid(
             auctionId,
@@ -84,6 +87,7 @@ describe("AuctionHouseMarket", function() {
             ethers.constants.AddressZero
         )).to.be.reverted;
 
+        // buyer2 raise his price and win the auction
         buyer2Price = JewelScale.mul(32);
         tx = await AuctionHouse.connect(buyer2).bid(
             auctionId,
@@ -224,7 +228,7 @@ describe("AuctionHouseMarket", function() {
             break;
         }
 
-        tx = await AuctionHouse.connect(seller).create(item, price, 3600);
+        tx = await AuctionHouse.connect(seller).create(item, price, 3600, 3600);
         await tx.wait();
         return await AuctionHouse.numAuctions();
     }
