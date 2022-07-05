@@ -30,3 +30,11 @@
 **HeroPool** - Not Deployed
 
 **TimelockController** - Not Deployed
+
+=========== V4 ==============
+
+**AuctionHouse**
+0xEC011836036C031aEf9e56926B08CB8BC64F9CA7 (improved bid time extension) 
+
+**HeroBank**
+0x621E352C8e8E4854971e88CBCed978ab97176eb3 (support multiple operators, stake Jewel to XJewel to increase rewards)
