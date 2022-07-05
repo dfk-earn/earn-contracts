@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "./AuctionHouse.sol";
+import "./interfaces/IDFKBank.sol";
 
 contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
     using SafeERC20 for IERC20;
@@ -19,8 +20,11 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public immutable DFKHero;
+    address public immutable DFKJewel;
+    address public immutable DFKBank;
     uint public immutable COLLATERAL_PER_OPERATOR;
     uint public constant BORROW_LIMIT_PER_OPERATOR = 6;
+    uint public constant SCORE_DECIMALS = 18;
 
     AuctionHouse public auctionHouse;
     uint public auctionExpiration;
@@ -56,10 +60,14 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
 
     constructor(
         address _DFKHero,
+        address _DFKJewel,
+        address _DFKBank,
         address _auctionHouse,
         uint _collateralPerOperator
     ) {
         DFKHero = _DFKHero;
+        DFKJewel = _DFKJewel;
+        DFKBank = _DFKBank;
         auctionHouse = AuctionHouse(_auctionHouse);
         COLLATERAL_PER_OPERATOR = _collateralPerOperator;
         auctionExpiration = 1 days;
@@ -104,30 +112,46 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
     }
 
     function createAuctionAndBid(Item calldata _item, uint256 _initialPrice) external {
-        transferMoney(msg.sender, address(this), _initialPrice);
+        IERC20(DFKJewel).safeTransferFrom(msg.sender, address(this), _initialPrice);
         uint auctionId = auctionHouse.create(
             _item,
             _initialPrice,
             auctionExpiration,
             auctionRenewPeriod
         );
-        auctionHouse.money().approve(address(auctionHouse), _initialPrice);
+        IERC20(DFKJewel).approve(address(auctionHouse), _initialPrice);
         auctionHouse.bid(auctionId, _initialPrice, msg.sender);
     }
 
     function getClaimable(address user) public view returns (uint256) {
-        return getRealizedProfit() * userScores[user] / totalScore;
+        return totalValue() * userScores[user] / totalScore;
     }
 
-    function claim() external {
+    function claimAll() external {
+        claimByScore(userScores[msg.sender]);
+    }
+
+    function claimByJewel(uint jewelAmount) external {
+        claimByScore(jewelToScore(jewelAmount));
+    }
+
+    function claimByScore(uint score) public {
         address user = msg.sender;
-        uint claimable = getClaimable(user);
-        require(claimable > 0, "HeroBank: no claimable");
-        uint score = userScores[user];
-        userScores[user] = 0;
+        uint userScore = userScores[user];
+        require(score > 0 && score <= userScore, "HeroBank: invalid score");
+        uint toClaim = scoreToJewel(score);
+        uint available = IERC20(DFKJewel).balanceOf(address(this));
+        if (available < toClaim) {
+            uint xJewelAmount = min(
+                jewelToXJewel(toClaim) + 1,
+                IERC20(DFKBank).balanceOf(address(this))
+            );
+            IDFKBank(DFKBank).leave(xJewelAmount);
+        }
+        userScores[user] -= score;
         totalScore -= score;
-        transferMoney(address(this), user, claimable);
-        emit UserClaimed(user, claimable);
+        IERC20(DFKJewel).transfer(user, toClaim);
+        emit UserClaimed(user, toClaim);
     }
 
     function borrowHeroes(uint[] memory _heroes) external onlyOperator {
@@ -158,11 +182,20 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
             uint heroId = borrowInfo.borrowedHeroes[i];
             IERC721(DFKHero).transferFrom(operator, address(this), heroId);
             address heroOwner = heroOwners[heroId];
-            userScores[heroOwner] += 1;
-            totalScore += 1;
+            userScores[heroOwner] += 10 ** SCORE_DECIMALS;
+            totalScore += 10 ** SCORE_DECIMALS;
         }
         borrowInfo.numBorrows = 0;
         numActiveOperators--;
+    }
+
+    function enterDFKBank(uint _jewelAmount) external onlyOperator {
+        IERC20(DFKJewel).approve(DFKBank, _jewelAmount);
+        IDFKBank(DFKBank).enter(_jewelAmount);
+    }
+
+    function leaveDFKBank(uint _xJewelAmount) external onlyOperator {
+        IDFKBank(DFKBank).leave(_xJewelAmount);
     }
 
     function withdrawalCollateral() external onlyOwner {
@@ -252,8 +285,41 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
         return result;
     }
 
-    function getRealizedProfit() public view returns (uint) {
-        return auctionHouse.money().balanceOf(address(this));
+    function xJewelToJewel(uint xJewelAmount) public view returns (uint) {
+        if (xJewelAmount > 0) {
+            uint xJewelSupply = IERC20(DFKBank).totalSupply();
+            require(xJewelAmount <= xJewelSupply, "HeroBank: invalid xJewelAmount");
+            uint jewelBalance = IERC20(DFKJewel).balanceOf(DFKBank);
+            return jewelBalance * xJewelAmount / xJewelSupply;
+        } else {
+            return 0;
+        }
+    }
+
+    function jewelToXJewel(uint jewelAmount) public view returns (uint) {
+        uint xJewelSupply = IERC20(DFKBank).totalSupply();
+        if (xJewelSupply == 0) {
+            return jewelAmount;
+        } else {
+            uint jewelBalance = IERC20(DFKJewel).balanceOf(DFKBank);
+            return jewelAmount * xJewelSupply / jewelBalance;
+        }
+    }
+
+    function scoreToJewel(uint score) public view returns (uint) {
+        require(score <= totalScore, "HeroBank: invalid score");
+        return (score > 0) ? totalValue() * score / totalScore : 0;
+    }
+
+    function jewelToScore(uint jewelAmount) public view returns (uint) {
+        uint jewelTotal = totalValue();
+        require(jewelAmount <= jewelTotal, "HeroBank: invalid jewelAmount");
+        return (jewelAmount > 0) ? totalScore * jewelAmount / jewelTotal : 0;
+    }
+
+    function totalValue() public view returns (uint) {
+        return IERC20(DFKJewel).balanceOf(address(this))
+            + xJewelToJewel(IERC20(DFKBank).balanceOf(address(this)));
     }
 
     function onHeroReceived(uint _heroId, address _owner) private {
@@ -270,15 +336,11 @@ contract HeroBank is Ownable, Pausable, IERC721Receiver, ERC1155Holder {
         emit HeroSent(_owner, _heroId);
     }
 
-    function transferMoney(address _from, address _to, uint _amount) private {
-        if (_from == address(this)) {
-            auctionHouse.money().safeTransfer(_to, _amount);
-        } else {
-            auctionHouse.money().safeTransferFrom(_from, _to, _amount);
-        }
-    }
-
     function availableCollateral() private view returns (uint) {
         return address(this).balance - numActiveOperators * COLLATERAL_PER_OPERATOR;
+    }
+
+    function min(uint a, uint b) private pure returns (uint) {
+        return a <= b ? a : b;
     }
 }

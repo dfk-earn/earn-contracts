@@ -17,11 +17,19 @@ module.exports = async function({
     const DFKHeroAddress = network.live
         ? config[network.name]["DFKHero"]
         : (await deployments.get("MockHero")).address;
+    const DFKJewelAddress = network.live
+        ? config[network.name]["DFKJewelToken"]
+        : (await deployments.get("MockJewel")).address;
+    const DFKBankAddress = network.live
+        ? config[network.name]["DFKBank"]
+        : (await deployments.get("MockBank")).address;
 
     await deployments.deploy("HeroBank", {
         from: deployer,
         args: [
             DFKHeroAddress,
+            DFKJewelAddress,
+            DFKBankAddress,
             auctionHouseAddress,
             ethers.utils.parseEther(collateralPerOperatorInEther.toString())
         ],

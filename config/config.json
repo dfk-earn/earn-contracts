@@ -2,6 +2,7 @@
     "harmony": {
         "DFKHero": "0x5F753dcDf9b1AD9AabC1346614D1f4746fd6Ce5C",
         "DFKJewelToken": "0x72Cb10C6bfA5624dD07Ef608027E366bd690048F",
+        "DFKBank": "0xA9cE83507D872C5e1273E745aBcfDa849DAA654F",
         "AccountFactory": "0x26B1029bD0bEEb31F2F5da74d2dd19fAC92b85Cc",
         "HeroBank": {
             "collateralPerOperatorInEther": 5000,

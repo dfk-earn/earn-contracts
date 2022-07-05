@@ -134,6 +134,11 @@ cache
 artifacts
 deployments
 
+# virtualenv
+.venv/
+venv/
+ENV/
+
 # OSX stuff
 .DS_Store
 

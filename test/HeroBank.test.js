@@ -5,10 +5,11 @@ const {
 } = require("hardhat");
 const { expect } = require("chai");
 
-describe("HeroBank", function() {
+describe.only("HeroBank", function() {
     let HeroBank;
     let MockHero;
     let MockJewel;
+    let MockBank;
     let owner;
     let operators;
     let users;
@@ -20,6 +21,7 @@ describe("HeroBank", function() {
         HeroBank = await ethers.getContract("HeroBank");
         MockHero = await ethers.getContract("MockHero");
         MockJewel = await ethers.getContract("MockJewel");
+        MockBank = await ethers.getContract("MockBank");
 
         const { deployer } = await getNamedAccounts();
         owner = await ethers.getSigner(deployer);
@@ -128,37 +130,59 @@ describe("HeroBank", function() {
         }
     })
 
-    // it("should claim money", async function() {
-    //     // borrow and repay two heroes from user1
-    //     tx = await HeroBank.connect(operator).borrowHeroes([ 1, 2 ]);
-    //     await tx.wait();
-    //     tx = await HeroBank.connect(operator).repayHeroes();
-    //     await tx.wait()
+    it("should claim jewel", async function() {
+        // borrow and repay two heroes from user1
+        tx = await HeroBank.connect(operators[0]).borrowHeroes([ 1, 2 ]);
+        await tx.wait();
+        tx = await HeroBank.connect(operators[0]).repayHeroes();
+        await tx.wait()
 
-    //     // borrow and repay four heroes from user2
-    //     tx = await HeroBank.connect(operator).borrowHeroes([ 11, 12, 13, 14 ]);
-    //     await tx.wait();
-    //     tx = await HeroBank.connect(operator).repayHeroes();
-    //     await tx.wait()
+        // borrow and repay four heroes from user2
+        tx = await HeroBank.connect(operators[1]).borrowHeroes([ 11, 12, 13, 14 ]);
+        await tx.wait();
+        tx = await HeroBank.connect(operators[1]).repayHeroes();
+        await tx.wait()
 
-    //     // user1 share should be 2/6, user2 share should be 4/6
-    //     const jewelScale = ethers.BigNumber.from(10).pow(18);
-    //     tx = await MockJewel.connect(owner).mint(
-    //         HeroBank.address,
-    //         jewelScale.mul(6)
-    //     );
-    //     await tx.wait();
+        // mint 6 jewel for HeroBank
+        const jewelScale = ethers.BigNumber.from(10).pow(18);
+        tx = await MockJewel.connect(owner).mint(
+            HeroBank.address,
+            jewelScale.mul(6)
+        );
+        await tx.wait();
 
-    //     tx = await HeroBank.connect(user1).claim();
-    //     await tx.wait();
-    //     const user1JewelBalance = await MockJewel.balanceOf(user1.address);
-    //     expect(user1JewelBalance).to.eq(jewelScale.mul(2));
+        // deposit jewel to MockBank
+        const jewelBalance = await MockJewel.balanceOf(HeroBank.address);
+        tx = await HeroBank.connect(operators[0]).enterDFKBank(jewelBalance);
+        await tx.wait()
 
-    //     tx = await HeroBank.connect(user2).claim();
-    //     await tx.wait();
-    //     const user2JewelBalance = await MockJewel.balanceOf(user2.address);
-    //     expect(user2JewelBalance).to.eq(jewelScale.mul(4));
-    // })
+        // user0 share should be 2/6, user1 share should be 4/6
+        tx = await HeroBank.connect(users[0]).claimAll();
+        await tx.wait();
+        const user0Score = await HeroBank.userScores(users[0].address);
+        expect(user0Score).to.eq(0);
+        const user0JewelBalance = await MockJewel.balanceOf(users[0].address);
+        expect(user0JewelBalance).to.eq(jewelScale.mul(2));
+
+        // user1 claim 2 jewel
+        tx = await HeroBank.connect(users[1]).claimByJewel(jewelScale.mul(2));
+        await tx.wait();
+        let user1JewelBalance = await MockJewel.balanceOf(users[1].address);
+        expect(user1JewelBalance).to.eq(jewelScale.mul(2));
+        let user1Score = await HeroBank.userScores(users[1].address);
+        expect(user1Score).to.eq(2);
+
+        // user1 claim all
+        tx = await HeroBank.connect(users[1]).claimAll();
+        await tx.wait();
+        user1JewelBalance = await MockJewel.balanceOf(users[1].address);
+        expect(user1JewelBalance).to.eq(jewelScale.mul(4));
+        user1Score = await HeroBank.userScores(users[1].address);
+        expect(user1Score).to.eq(0);
+
+        const totalScore = await HeroBank.totalScore();
+        expect(totalScore).to.eq(0);
+    })
 
     async function getHeroes(account) {
         const heroes = [];
