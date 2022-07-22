@@ -170,7 +170,7 @@ describe.only("HeroBank", function() {
         let user1JewelBalance = await MockJewel.balanceOf(users[1].address);
         expect(user1JewelBalance).to.eq(jewelScale.mul(2));
         let user1Score = await HeroBank.userScores(users[1].address);
-        expect(user1Score).to.eq(2);
+        expect(user1Score).to.eq(ethers.BigNumber.from(10).pow(18).mul(2));
 
         // user1 claim all
         tx = await HeroBank.connect(users[1]).claimAll();

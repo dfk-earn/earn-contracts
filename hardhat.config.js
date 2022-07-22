@@ -1,14 +1,14 @@
 require("dotenv").config();
-require("@nomiclabs/hardhat-waffle");
+require("@nomicfoundation/hardhat-chai-matchers");
+require("hardhat-deploy-ethers");
 require("hardhat-deploy");
-require("@nomiclabs/hardhat-etherscan");
 
 module.exports = {
     networks: {
         harmony: {
             url: process.env.DFKEarn_rpcUrl || "https://api.harmony.one",
             accounts: [ process.env.DFKEarn_privateKey ],
-            gasPrice: 35e9
+            gasPrice: 110e9
         }
     },
     namedAccounts: {
