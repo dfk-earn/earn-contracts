@@ -307,4 +307,3 @@ describe('ESwap', function () {
 
   })
 })
-

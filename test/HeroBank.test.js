@@ -5,7 +5,7 @@ const {
 } = require("hardhat");
 const { expect } = require("chai");
 
-describe.only("HeroBank", function() {
+describe("HeroBank", function() {
     let HeroBank;
     let MockHero;
     let MockJewel;
